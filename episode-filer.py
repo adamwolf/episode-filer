@@ -17,12 +17,11 @@ def parse_commandline():
     usage = "usage: %prog [options] FILE/DIR"
     parser = OptionParser(usage, version="%prog 0.1")
     parser.add_option("-p", "--pretend", help="do not actually move any files, just show what would have happened", action="store_true", dest="pretend")
-    parser.add_option("-c", "--config-file", help="use FILE as configuration file", metavar="FILE", default="~/.tvsorter", dest="config_file")
     parser.add_option("-b", "--base", help="use DIR as sorting base", metavar="DIR", dest="base")
     parser.add_option("-r", "--recursive", help="if passing in a directory, recursively look for files.", dest="recursive", default=False, action="store_true")
     parser.add_option("-v", "--verbose", action="count", dest="verbosity", help="be more verbose.")
     parser.add_option("-e", "--extensions", dest="extensions", help="filter by this set of extensions, comma delimited.  Default is %default.  If \"*\", all files will be examined.", default=".avi,.mkv")
-    parser.add_option("-c", "--copy", dest="copy", help="copy files instead of moving them.", action="store_true")
+    #parser.add_option("--copy", dest="copy", help="copy files instead of moving them.", action="store_true")
     (options, args) = parser.parse_args()
     if not options.base:
         parser.error("--base must be specified.")
