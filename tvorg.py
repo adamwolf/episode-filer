@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+"""tvorg.py
+tvorg.py is a library for organizing tv shows.  It's used by episode-filer and
+names-detector.
+
+Adam Wolf
+http://feelslikeburning.com
+"""
+
 import re
 
 def clean_show_name(name):
