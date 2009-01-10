@@ -121,26 +121,26 @@ def move_file(file, directory, season, options):
     logging.debug("destination file: %s" % dest_file)
 
     if not os.path.exists(show_dir):
-        logging.error("top level show directory %s doesn't exist in base directory %s. moving on." % (directory, options.base))
+        logging.error("Top level show directory %s doesn't exist in base directory %s.  Moving on." % (directory, options.base))
         return
 
     if not os.path.exists(dest_dir):
-        logging.info("Season directory %s doesn't exist in %s." % (season_name, show_dir))
+        logging.debug("Season directory %s doesn't exist in %s." % (season_name, show_dir))
         if not options.pretend:
             logging.info("Creating %s" % dest_dir)
             os.mkdir(dest_dir)
     
     if os.path.exists(dest_file):
-        logging.error("file called %s already in destination %s.  leaving %s alone." % (filename, dest_dir, file))
+        logging.error("File called %s already in destination %s.  Leaving %s alone." % (filename, dest_dir, file))
         return
     
     logging.debug("wheew.  actually passed all those tests, and now we're going to move the file.")
     if not options.pretend:
-        logging.info("Moving %s to %s" % (file, dest_dir))
+        logging.info("Moving %s to %s\n" % (file, dest_dir))
         shutil.move(file, dest_file)
         #os.system("touch \"%s\"" % dest_file)
     else:
-        logging.debug("not really, of course, because we're only pretend!")
+        logging.info("Would move %s to %s\n" % (file, dest_dir))
         
         
 def main():
@@ -177,11 +177,11 @@ def main():
                 logging.debug("directory %s found for %s" % (os.path.join(options.base, directory), show))
                 move_file(file, directory, season, options)
             else:
-                logging.error("Directory not found for %s from filename %s" % (show, file))
+                logging.error("Directory not found for TV show \"%s\" for file %s. Perhaps you need to create a directory in %s for this show.  If you have a directory for this show, try adding the show name detected for this file to the .names file.\n" % (show, file, options.base))
 
         else:
-            logging.info("Unable to parse %s" % file)
+            logging.info("Unable to parse %s\n" % file)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()
