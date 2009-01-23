@@ -9,6 +9,23 @@ http://feelslikeburning.com
 
 import re
 
+def Episode():
+    def __init__(self, filename=None):
+        self.filename = filename
+        if filename:
+            self.parsed_show, self.parsed_season, self.parsed_episode = parse_filename(filename)
+        else:
+            self.parsed_show, self.parsed_season, self.parsed_episode = None        
+
+def Show():
+    def __init__(self, directory=None, name=None, names=None):
+        self.directory = directory
+        self.name = name
+        if self.names:
+            self.names = []
+        else:
+            self.names = [self.name]
+
 def clean_show_name(name):
     """This sanitizes a show name a little bit.
 
