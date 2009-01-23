@@ -34,10 +34,10 @@ def clean_show_name(name):
         name = name[0:len(name)-2]
     return name
 
-def get_info_for_file(filename):
+def parse_filename(filename):
     """This returns the show, season, and episode number for a single file.
 
-    >>> get_info_for_file("The.IT.Crowd.S03E06.WS.PDTV.XviD-RiVER.avi")
+    >>> parse_filename("The.IT.Crowd.S03E06.WS.PDTV.XviD-RiVER.avi")
     ('the it crowd', 3, 6)
     
     """
@@ -54,14 +54,14 @@ def get_info_for_file(filename):
         match = file_regex.search(filename) 
         if match: 
             break 
-    if match: 
+    if not match:
+        raise NameError, "Cannot parse %s" % filename
+    else:
         season = int(match.group(1))
         episode = int(match.group(2))
         show = filename[0:match.start()] 
         show = clean_show_name(show)
         return (show, season, episode)
-    elif not match:
-        return None
 
 if __name__ == "__main__":
     import doctest
