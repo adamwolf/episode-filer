@@ -10,10 +10,11 @@
 >   -b DIR, --base=DIR    use DIR as sorting base
 >   -r, --recursive       if passing in a directory, recursively look for files.
 >   -v, --verbose         be more verbose.
->  -e EXTENSIONS, --extensions=EXTENSIONS
+>   -e EXTENSIONS, --extensions=EXTENSIONS
 >                         filter by this set of extensions, comma delimited.
 >                         Default is .avi,.mkv.  If "*", all files will be
 >                         examined.
+>   --interactive     Ask before moving each file.  Default is False.
 
 It appears to be fully functional, but it doesn't have any tests.  I'll be working on that shortly.
 
@@ -135,8 +136,6 @@ Example usage:
 > wolf@danny:/vault/public/tv/Battlestar Galactica$ ~/project/episode-filer/names-detector.py 
 > battlestar galactica
 > bsg
-
-
 
 Troubleshooting, Questions, or Comments:
 ========================================

@@ -38,11 +38,12 @@ def main():
     for root, dirs, files in os.walk(options.directory):
         for file in files:
             logging.debug("Parsing show information from %s" % file)
-            info = tvorg.get_info_for_file(os.path.split(file)[1])
-            if info:
-                show, season, episode = info
-                logging.debug("show: %s, season: %s, episode: %s" % info)
-                names.add(show)
+            try:
+                episode = tvorg.Episode(path=file)
+                logging.debug("%s" % episode)
+                names.add(episode.parsed_show)
+            except NameError, e:
+                logging.debug("unable to parse %s: %s" % (file, e))
 
     for name in sorted(names):
         print name

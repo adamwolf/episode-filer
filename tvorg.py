@@ -7,24 +7,36 @@ Adam Wolf
 http://feelslikeburning.com
 """
 
-import re
+import re, os.path
 
-def Episode():
-    def __init__(self, filename=None):
-        self.filename = filename
-        if filename:
-            self.parsed_show, self.parsed_season, self.parsed_episode = parse_filename(filename)
-        else:
-            self.parsed_show, self.parsed_season, self.parsed_episode = None        
+class Episode():
+    def __init__(self, path=None):
+        self.path = path
+        self.filename = os.path.split(path)[1]
+        self.parsed_show, self.parsed_season, self.parsed_episode = parse_filename(self.filename)
 
-def Show():
+    def __str__(self):
+        return "%s - Season %i, Episode %i" % (self.parsed_show,
+                self.parsed_season, self.parsed_episode)
+
+class Show():
     def __init__(self, directory=None, name=None, names=None):
         self.directory = directory
         self.name = name
-        if self.names:
-            self.names = []
+        if names:
+            self.names = set(names)
         else:
-            self.names = [self.name]
+            self.names = set([name])
+
+    def __str__(self):
+        return self.name
+
+    def add_name(self, name):
+        self.names.add(name)
+    
+    def add_names(names):
+        for name in names:
+            self.add_name(name)
 
 def clean_show_name(name):
     """This sanitizes a show name a little bit.

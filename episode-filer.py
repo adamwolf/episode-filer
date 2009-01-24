@@ -11,7 +11,6 @@ http://feelslikeburning.com
 import tvorg, logging, os, sys, shutil
 from optparse import OptionParser
 
-
 def parse_commandline():
     """Returns a tuple (options, args) from OptionParser and does any error handling."""
     usage = "usage: %prog [options] FILE/DIR"
@@ -21,7 +20,9 @@ def parse_commandline():
     parser.add_option("-r", "--recursive", help="if passing in a directory, recursively look for files.", dest="recursive", default=False, action="store_true")
     parser.add_option("-v", "--verbose", action="count", dest="verbosity", help="be more verbose.")
     parser.add_option("-e", "--extensions", dest="extensions", help="filter by this set of extensions, comma delimited.  Default is %default.  If \"*\", all files will be examined.", default=".avi,.mkv")
-    #parser.add_option("--copy", dest="copy", help="copy files instead of moving them.", action="store_true")
+    parser.add_option("-i", "--interactive", dest="interactive", action="store_true",
+            help="Ask before moving each file.  Default is %default.",
+            default=False)
     (options, args) = parser.parse_args()
     if not options.base:
         parser.error("--base must be specified.")
@@ -37,7 +38,7 @@ def parse_commandline():
 
     return options, args
 
-def get_file_list(options, args):
+def get_files(options, args):
     """Returns a list of files to be sorted based on the options and
     arguments."""
 
@@ -65,8 +66,6 @@ def get_file_list(options, args):
 
     logging.debug("files: %s" % files)
    
-    #this should be done in the main loop of file adding
-    #but I pasted it in from main()
     if options.extensions != "*":
         logging.debug("pruning file list.  using extensions: %s" % options.extensions)
         files_by_extension = {}
@@ -80,107 +79,136 @@ def get_file_list(options, args):
 
     return files
 
-def get_show_names(base):
-    """Detects show names"""
-    show_names = {}
-    logging.debug("Detecting show names from .names files")
-    for show in os.listdir(base):
-        if ".names" in os.listdir(os.path.join(base, show)):
-            logging.debug("found %s" % os.path.join(base, show, ".names"))
-            name_file = open(os.path.join(base, show, ".names"))
-            show_names[show] = [line.strip() for line in name_file if not line.startswith("#")]
-            #test that if you have only a #ignore line in your .names directory
-            #it will ignore that directory
-            name_file.close()
-        else:
+def get_show_for_episode(episode, shows):
+    for show in shows:
+        if episode.parsed_show in show.names:
+            return show
+
+
+def get_shows(base):
+    """Parses the directory tree and .names files to get a list of Shows."""
+    shows = []
+    logging.debug("Detecting shows from .names files")
+    logging.debug(base)
+    for directory in os.listdir(base):
+        show_path = os.path.join(base, directory)
+        if ".names" not in os.listdir(show_path):
             #if you didn't find a name file, add the clean name of the directory
             #as the name of the show.
-            show_names[show] = tvorg.clean_show_name(show)
+            show = tvorg.Show(directory=show_path, name=tvorg.clean_show_name(directory))
+            shows.append(show)
+        else:
+            names_path = os.path.join(show_path, ".names")
+            logging.debug("found %s" % names_path)
+            name_file = open(names_path)
+            show_names = [line.strip() for line in name_file if not line.startswith("#")]
+            name_file.close()
+            if not show_names:
+                #there were either no lines, or it was all comments / ignore
+                #so we don't want to add it
+                pass
+            else:
+                show = tvorg.Show(directory=show_path, name=tvorg.clean_show_name(directory), names=show_names)
+                shows.append(show)
+    return shows
+
         
-        logging.debug("found alternate names %s for %s" % (show_names[show], show))
+def get_directory_from_show_names(show, show_names):
+        for tv_show in show_names:
+            if show in show_names[tv_show]:
+                return tv_show
+        return False
 
-    return show_names
-
-def move_file(file, directory, season, options):
-    """Move tv show into directory inside of options.base.  If options.pretend,
-    don't actually do anything, just splatter logging with it."""
-    
-    filename = os.path.split(file)[1]
-    
-    if options.pretend:
-        logging.debug("not actually going to move %s because options.pretend is set." % file)
-    logging.debug("trying to move %s" % file)
-
-    #oh noes! what if season is something tricky like ../../../../../../?
-    #um, how about I finally learn Template and be done with it?
-    season_name = "Season %s" % int(season)
-
-    show_dir = os.path.join(options.base, directory)
-    dest_dir = os.path.join(show_dir, season_name)
-    dest_file = os.path.join(dest_dir, filename)
-    logging.debug("destination file: %s" % dest_file)
-
-    if not os.path.exists(show_dir):
-        logging.error("Top level show directory %s doesn't exist in base directory %s.  Moving on." % (directory, options.base))
-        return
-
-    if not os.path.exists(dest_dir):
-        logging.debug("Season directory %s doesn't exist in %s." % (season_name, show_dir))
-        if not options.pretend:
-            logging.info("Creating %s" % dest_dir)
-            os.mkdir(dest_dir)
-    
-    if os.path.exists(dest_file):
-        logging.error("File called %s already in destination %s.  Leaving %s alone." % (filename, dest_dir, file))
-        return
-    
-    logging.debug("wheew.  actually passed all those tests, and now we're going to move the file.")
-    if not options.pretend:
-        logging.info("Moving %s to %s\n" % (file, dest_dir))
-        shutil.move(file, dest_file)
-        #os.system("touch \"%s\"" % dest_file)
+def get_interactive_response(episode, destination_path):
+    stop = False
+    response = False
+    while not stop:
+        response =  raw_input("Move %s to %s (y/n)? "% (episode.path, destination_path))
+        if response != "y" and response != "n":
+            print "Please respond with y or n."
+        else:
+            stop = True
+    if response == "y":
+        return True
     else:
-        logging.info("Would move %s to %s\n" % (file, dest_dir))
-        
-        
+        return False
+
+def really_move(source, destination):
+    """Really moves file source to file destination.  The only safety check it
+    makes is to see if destination file exists.  Any directories needed are
+    created."""
+    
+    if os.path.exists(destination):
+        logging.info("%s already exists.  Not moving %s" % (destination, source))
+    else:
+        destination_directory = os.path.split(destination)[0]
+        if not os.path.exists(destination_directory):
+            logging.debug("creating directories to create %s" % destination_directory)
+            os.makedirs(destination_directory)
+        logging.info("Moving %s to %s." % (source, destination))
+        shutil.move(source, destination)
+
+def move_file(episode, show, options):
+    
+    if not os.path.isdir(show.directory):
+        logging.error("Directory %s not found for TV show \"%s\"!" % (show.directory, show.name))
+        return
+
+    season_dir_name = "Season %i" % episode.parsed_season
+    season_dir = os.path.join(show.directory, season_dir_name)
+    destination_path = os.path.join(season_dir, episode.filename)
+
+    if options.interactive:
+        logging.debug("Querying user about move in terminal")
+        if get_interactive_response(episode, destination_path):
+            logging.debug("User said we should move file.")
+        else:
+            logging.debug("User said we shouldn't move file.")
+            return
+
+    if options.pretend:  
+        logging.info("Not moving because --pretend set.")
+        return
+
+    logging.debug("Really moving %s to %s" % (episode.path, destination_path))
+    really_move(episode.path, destination_path)
+    
 def main():
     """Moves specified files to an organized location based on filenames."""
-    logging.debug("started")
+    logging.debug("Logging started.")
     (options, args) = parse_commandline()
     logging.debug("Parsed Options: %s" % options)
     logging.debug("Parsed Arguments: %s" % args)
 
-    files = get_file_list(options, args)
+    files = get_files(options, args)
             
     if not files:
         logging.critical("No files found to sort! Exiting.")
         sys.exit(1)
 
-    show_names = get_show_names(options.base)
-    logging.debug("Show names: %s" % show_names)
+    shows = get_shows(options.base)
+    
+    for show in shows:
+        logging.debug("%s" % show)
     
     for file in files:
         logging.debug("Parsing show information from %s" % file)
-        info = tvorg.get_info_for_file(os.path.split(file)[1])
-        if info:
-            show, season, episode = info
-            logging.info("Filename: %s" % file)
-            logging.info("Show: %s, Season: %s, Episode: %s" % info)
-            directory = False
+        try:
+            episode = tvorg.Episode(path=file)
+        except NameError, error:
+            logging.info("Error while parsing file %s: %s" % (file, error))
+            continue
 
-            for tv_show in show_names:
-                if show in show_names[tv_show]:
-                    directory = tv_show
-                    break
-            
-            if directory:
-                logging.debug("directory %s found for %s" % (os.path.join(options.base, directory), show))
-                move_file(file, directory, season, options)
-            else:
-                logging.error("Directory not found for TV show \"%s\" for file %s. Perhaps you need to create a directory in %s for this show.  If you have a directory for this show, try adding the show name detected for this file to the .names file.\n" % (show, file, options.base))
-
+        logging.info("\nFile: %s" % file)
+        logging.info("Episode Information: %s" % episode)
+        
+        show = get_show_for_episode(episode, shows)
+        if not show:
+            logging.error("Show not found for TV show \"%s\" for file %s. Perhaps you need to create a directory in %s for this show. If you have a directory for this show, try adding the show name detected for this file to the .names file.\n" % (episode.parsed_show, file, options.base))
         else:
-            logging.info("Unable to parse %s\n" % file)
+            move_file(episode, show, options)
+
+    logging.debug("Completed.")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
