@@ -16,8 +16,6 @@
                              examined.
        --interactive     Ask before moving each file.  Default is False.
 
-It appears to be fully functional, but it doesn't have any tests.  I'll be working on that shortly.
-
 episode-filer assumes a heirarchy of base/TV Show Name/Season N/filename.avi.
 It assumes the input files will have the show name in the beginning of the name and then the episode and season information.
 
@@ -36,11 +34,11 @@ episode-filer will use the beginning of the to-be-sorted file as a clue to which
 You can then run episode-filer on some files, and if you point them to a base, it will try to move them to the right space.
 
 Here's some samples to show off how nifty the filename parsing is:
-    episode-filer.py --pretend --base /vault/public/tv /vault/public/unsorted/
+     episode-filer.py --pretend --base /vault/public/tv /vault/public/unsorted/
     
-    Filename: /vault/public/unsorted/heroes.308.hdtv-lol.avi
-    Show: heroes, Season: 3, Episode: 8
-    Would move /vault/public/unsorted/heroes.308.hdtv-lol.avi to /vault/public/tv/Heroes/Season 3
+     Filename: /vault/public/unsorted/heroes.308.hdtv-lol.avi
+     Show: heroes, Season: 3, Episode: 8
+     Would move /vault/public/unsorted/heroes.308.hdtv-lol.avi to /vault/public/tv/Heroes/Season 3
      
      Filename: /vault/public/unsorted/The.Office.S05E02.HDTV.XviD-LOL.[VTV].avi
      Show: the office, Season: 5, Episode: 2
@@ -140,6 +138,37 @@ Example usage:
     battlestar galactica
     bsg
 
+Todo
+====
+I'd like to add more tests, and move some more logic into tvorg.py instead of the episode-filer.  Whenever deluge finally gets an RSS plugin that can run headless, I'll make the effort to make a deluge plugin for this.  Then you can subscribe to an RSS feed of tv shows, and deluge will automatically move them into your tv directories when they're completed, and continue to share from there.
+
+Changelog
+=========
+For more change information than this, look at the git commit logs at http://github.com/adamwolf/episode-filer/.
+
+v0.2: first real public release. It hasn't been unstable or misbehaving when I've used it, but I am the author.
+
+Licensing
+=======
+This software is copyright 2009 Adam Wolf, and is distributed under the terms of the GNU General Public License.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 Troubleshooting, Questions, or Comments:
 ========================================
+episode-filer is located at http://feelslikeburning.com/projects/episode-filer
+
+The code is currently maintained at http://github.com/adamwolf/episode-filer
+
 Feel free to contact me at http://feelslikeburning.com/contact
