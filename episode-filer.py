@@ -182,7 +182,7 @@ def move_file(episode, show, options):
             return
 
     if options.pretend:  
-        #logging.info("Not moving because --pretend set.")
+        logging.info("Not moving because --pretend set.")
         return
 
     logging.debug("Really moving %s to %s" % (episode.path, destination_path))
